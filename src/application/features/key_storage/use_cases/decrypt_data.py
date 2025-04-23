@@ -3,7 +3,9 @@ from src.domain.repositories.ikey_storage import IKeyStorage
 
 
 class DecryptDataUseCase:
-    def __init__(self, key_storage_repository: IKeyStorage, encryptor_repository: IEncryptor):
+    def __init__(
+        self, key_storage_repository: IKeyStorage, encryptor_repository: IEncryptor
+    ):
         self.key_storage_repository = key_storage_repository
         self.encryptor_repository = encryptor_repository
 

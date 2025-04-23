@@ -17,13 +17,21 @@ class KMSController:
         @self.router.post("/encrypt")
         def encrypt(request: EncryptRequest):
             try:
-                return {"encrypted": self.kms_service.encrypt_data(request.key_id, request.plaintext)}
+                return {
+                    "encrypted": self.kms_service.encrypt_data(
+                        request.key_id, request.plaintext
+                    )
+                }
             except ValueError:
                 raise HTTPException(status_code=404, detail="Key not found")
 
         @self.router.post("/decrypt")
         def decrypt(request: DecryptRequest):
             try:
-                return {"decrypted": self.kms_service.decrypt_data(request.key_id, request.encrypted_text)}
+                return {
+                    "decrypted": self.kms_service.decrypt_data(
+                        request.key_id, request.encrypted_text
+                    )
+                }
             except ValueError:
                 raise HTTPException(status_code=404, detail="Key not found")

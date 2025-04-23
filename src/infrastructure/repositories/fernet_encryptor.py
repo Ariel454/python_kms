@@ -3,6 +3,7 @@ from cryptography.fernet import Fernet
 import base64
 import os
 
+
 class FernetEncryptor(IEncryptor):
     """
     Implementation of the IEncryptor interface using the Fernet symmetric encryption.

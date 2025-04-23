@@ -3,6 +3,7 @@ class DecryptRequestDTO:
         self.key_id = key_id
         self.encrypted_text = encrypted_text
 
+
 class DecryptRequestDTOBuilder:
     def __init__(self):
         self._key_id = None

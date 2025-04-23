@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class IEncryptor(ABC):
     @abstractmethod
     def generate_key(self):

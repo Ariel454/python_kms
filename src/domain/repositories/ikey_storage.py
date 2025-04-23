@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class IKeyStorage(ABC):
     @abstractmethod
     def store_key(self, key_id: str, key: bytes):

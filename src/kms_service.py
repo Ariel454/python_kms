@@ -7,13 +7,16 @@ import os
 app = FastAPI()
 KEYS_STORAGE = {}
 
+
 class EncryptRequest(BaseModel):
     key_id: str
     plaintext: str
 
+
 class DecryptRequest(BaseModel):
     key_id: str
     encrypted_text: str
+
 
 def generate_key():
     key = Fernet.generate_key()
@@ -21,10 +24,12 @@ def generate_key():
     KEYS_STORAGE[key_id] = key
     return key_id, key
 
+
 @app.post("/generate-key")
 def create_key():
     key_id, key = generate_key()
     return {"key_id": key_id, "key": key.decode()}
+
 
 @app.post("/encrypt")
 def encrypt_data(request: EncryptRequest):
@@ -35,6 +40,7 @@ def encrypt_data(request: EncryptRequest):
     encrypted = fernet.encrypt(request.plaintext.encode())
     return {"encrypted": encrypted.decode()}
 
+
 @app.post("/decrypt")
 def decrypt_data(request: DecryptRequest):
     if request.key_id not in KEYS_STORAGE:
@@ -44,6 +50,8 @@ def decrypt_data(request: DecryptRequest):
     decrypted = fernet.decrypt(request.encrypted_text.encode())
     return {"decrypted": decrypted.decode()}
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
