@@ -9,7 +9,9 @@ from src.application.features.key_storage.use_cases.generate_key import (
 )
 from src.application.services.kms_service import KMSService
 from src.infrastructure.repositories.fernet_encryptor import FernetEncryptor
-from src.infrastructure.repositories.key_storage_repository import KeyStoragerepository
+from src.infrastructure.repositories.key_storage_repository import (
+    KeyStoragerepository
+)
 from src.presentation.kms.kms_controller import (
     KMSController,
 )
