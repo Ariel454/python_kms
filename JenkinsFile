@@ -1,0 +1,88 @@
+def REPO_URL = 'https://github.com/Ariel454/python_kms.git'
+
+pipeline {
+    agent any
+
+    environment {
+        VENV = '.venv'
+        PYTHONPATH = "${WORKSPACE}/src"  
+    }
+
+    stages {
+
+        stage('Clone repo') {
+            steps {
+                git credentialsId: 'githubariel454-token', url: "${REPO_URL}", branch: 'main'
+            }
+        }
+
+        stage('Install dependencies') {
+            steps {
+                sh 'python3 -m venv $VENV'
+                sh './$VENV/bin/pip install -r requirements.txt'
+            }
+        }
+
+        stage('Run tests') {
+            steps {
+                sh "export PYTHONPATH=\$WORKSPACE/src"
+                sh "./$VENV/bin/pytest --junitxml=report.xml"
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh './$VENV/bin/python -m build'
+            }
+        }
+
+        stage('Archive Test Results') {
+            steps {
+                junit 'report.xml'
+            }
+        }
+
+        stage('Archive Build Artifacts') {
+            steps {
+                archiveArtifacts artifacts: 'dist/*.whl', fingerprint: true
+            }
+        }
+
+        stage('Code Quality Analysis'){
+            steps {
+                sh './$VENV/bin/flake8 src/'
+            }
+        }
+
+        stage('Docker Build & Deploy') {
+            steps {
+                script {
+                    def imageName = "kms_service:${BUILD_NUMBER}"
+                    sh "docker build -t ${imageName} ."
+                    sh "docker stop kms_container || true"
+                    sh "docker rm kms_container || true"
+                    sh "docker run -d -p 8000:8000 --name kms_container ${imageName}"
+                }
+            }
+        }
+
+        stage('Success') {
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                echo '✅ Build exitoso!'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo '🧼 Limpiando workspace...'
+            cleanWs()
+        }
+        failure {
+            echo '💥 El build falló.'
+        }
+    }
+}
