@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from src.application.services.kms_service import KMSService
 from src.kms_service import DecryptRequest, EncryptRequest
 

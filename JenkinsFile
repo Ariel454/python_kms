@@ -58,10 +58,21 @@ pipeline {
             steps {
                 script {
                     def imageName = "kms_service:${BUILD_NUMBER}"
+                    
+                    // Construir imagen
                     sh "docker build -t ${imageName} ."
+                    
+                    // Detener y eliminar contenedor anterior si existe
                     sh "docker stop kms_container || true"
                     sh "docker rm kms_container || true"
-                    sh "docker run -d -p 8000:8000 --name kms_container ${imageName}"
+                    
+                    // Ejecutar nuevo contenedor
+                    sh """
+                    docker run -d \
+                        --name kms_container \
+                        -p 8000:8000 \
+                        ${imageName}
+                    """
                 }
             }
         }
