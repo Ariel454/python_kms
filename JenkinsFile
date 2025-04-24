@@ -88,12 +88,27 @@ pipeline {
     }
 
     post {
-        always {
-            echo '🧼 Limpiando workspace...'
-            cleanWs()
+        success {
+            script {
+                gitHubCommitStatus(
+                    context: "Jenkins Build",
+                    description: "Build exitoso",
+                    status: "SUCCESS",
+                    repo: "Ariel454/python_kms",
+                    commitSha: env.GIT_COMMIT // Asegúrate de que GIT_COMMIT esté disponible
+                )
+            }
         }
         failure {
-            echo '💥 El build falló.'
+            script {
+                gitHubCommitStatus(
+                    context: "Jenkins Build",
+                    description: "Build fallido",
+                    status: "FAILURE",
+                    repo: "Ariel454/python_kms",
+                    commitSha: env.GIT_COMMIT
+                )
+            }
         }
     }
 }
