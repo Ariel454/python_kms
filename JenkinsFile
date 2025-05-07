@@ -88,12 +88,39 @@ pipeline {
     }
 
     post {
+<<<<<<< Updated upstream
         always {
             echo '🧼 Limpiando workspace...'
             cleanWs()
+=======
+        success {
+            withCredentials([string(credentialsId: 'github-token-comment', variable: 'GITHUB_TOKEN')]){
+                sh """
+                curl -H "Authorization: token \$GITHUB_TOKEN" \\
+                    -H "Accept: application/vnd.github.v3+json" \\
+                    -X POST \\
+                    -d '{\"body\": \"✅ ¡Build exitoso en Jenkins! Revisa los detalles: ${BUILD_URL}\"}' \\
+                    https://api.github.com/repos/Ariel454/python_kms/issues/1/comments
+                """
+            }
+>>>>>>> Stashed changes
         }
+
         failure {
+<<<<<<< Updated upstream
             echo '💥 El build falló.'
+=======
+           withCredentials([string(credentialsId: 'github-token-comment', variable: 'GITHUB_TOKEN')]) {
+                sh """
+                curl -H "Authorization: token \$GITHUB_TOKEN" \\
+                    -H "Accept: application/vnd.github.v3+json" \\
+                    -X POST \\
+                    -d '{\"body\": \"❌ El pipeline falló en Jenkins. Revisa los detalles: ${BUILD_URL}\"}' \\
+                    https://api.github.com/repos/Ariel454/python_kms/issues/1/comments
+                """
+            }
+>>>>>>> Stashed changes
         }
     }
+
 }
