@@ -88,11 +88,6 @@ pipeline {
     }
 
     post {
-<<<<<<< Updated upstream
-        always {
-            echo '🧼 Limpiando workspace...'
-            cleanWs()
-=======
         success {
             withCredentials([string(credentialsId: 'github-token-comment', variable: 'GITHUB_TOKEN')]){
                 sh """
@@ -103,13 +98,9 @@ pipeline {
                     https://api.github.com/repos/Ariel454/python_kms/issues/1/comments
                 """
             }
->>>>>>> Stashed changes
         }
 
         failure {
-<<<<<<< Updated upstream
-            echo '💥 El build falló.'
-=======
            withCredentials([string(credentialsId: 'github-token-comment', variable: 'GITHUB_TOKEN')]) {
                 sh """
                 curl -H "Authorization: token \$GITHUB_TOKEN" \\
@@ -119,7 +110,6 @@ pipeline {
                     https://api.github.com/repos/Ariel454/python_kms/issues/1/comments
                 """
             }
->>>>>>> Stashed changes
         }
     }
 
