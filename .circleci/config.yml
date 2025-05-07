@@ -35,7 +35,7 @@ jobs:
           name: Ejecutar pruebas en paralelo
           command: |
             . $VENV/bin/activate
-            TEST_FILES=$(circleci tests split --split-by=timings $(find test -name "test_*.py"))
+            TEST_FILES=$(find test -name "test_*.py" | circleci tests split --split-by=timings)
             echo "$TEST_FILES" | xargs -n 1 pytest --junitxml=report.xml
 
   lint:
