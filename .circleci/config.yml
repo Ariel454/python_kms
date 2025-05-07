@@ -1,32 +1,112 @@
 version: 2.1
-orbs:
-  python: circleci/python@2
-jobs:
-  test-python:
-    # Install dependencies and run test
+
+executors:
+  python-executor:
     docker:
-      - image: cimg/python:3.8-node
+      - image: cimg/python:3.11
+    environment:
+      PYTHONPATH: src
+      VENV: .venv
+
+jobs:
+  install_dependencies:
+    executor: python-executor
     steps:
       - checkout
-      - python/install-packages
       - run:
-          name: Run tests
-          command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
-      - store_test_results:
-          path: junit.xml
-  deploy:
-    # This is an example deploy job, not actually used by the workflow
+          name: Crear virtualenv
+          command: |
+            python -m venv $VENV
+            . $VENV/bin/activate
+            pip install -r requirements.txt
+  run_tests:
+    parallelism: 2
+    executor: python-executor
+    steps:
+      - checkout
+      - run:
+          name: Ejecutar pruebas en paralelo
+          command: |
+            . $VENV/bin/activate
+            TEST_FILES=$(circleci tests split --split-by=timings "test/*.py")
+            echo "$TEST_FILES" | xargs -n 1 pytest --junitxml=report.xml
+  lint:
+    executor: python-executor
+    steps:
+      - checkout
+      - run:
+          name: Análisis de estilo con flake8
+          command: |
+            . $VENV/bin/activate
+            flake8 src/
+  build:
+    executor: python-executor
+    steps:
+      - checkout
+      - run:
+          name: Build del paquete
+          command: |
+            . $VENV/bin/activate
+            python -m build
+  docker_build:
     docker:
       - image: cimg/base:stable
     steps:
-      # Replace this with steps to deploy to users
+      - checkout
+      - setup_remote_docker
       - run:
-          name: deploy
-          command: '#e.g. ./deploy.sh'
+          name: Build y ejecución de Docker
+          command: |
+            docker build -t kms_service:latest .
+            docker run -d -p 8000:8000 --name kms_container kms_service:latest
+  notify_github_success:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Notificar éxito a GitHub
+          command: |
+            curl -H "Authorization: token ${GITHUB_TOKEN}" \
+                 -H "Accept: application/vnd.github.v3+json" \
+                 -X POST \
+                 -d '{"body": "✅ ¡Build exitoso en CircleCI! Revisa los detalles en el panel de CircleCI."}' \
+                 https://api.github.com/repos/Ariel454/python_kms/issues/1/comments
+  notify_github_failure:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Notificar fallo a GitHub
+          command: |
+            curl -H "Authorization: token ${GITHUB_TOKEN}" \
+                 -H "Accept: application/vnd.github.v3+json" \
+                 -X POST \
+                 -d '{"body": "❌ El pipeline falló en CircleCI. Revisa los detalles en el panel de CircleCI."}' \
+                 https://api.github.com/repos/Ariel454/python_kms/issues/1/comments
 workflows:
-  build-and-test:
+  version: 2
+  main_workflow:
     jobs:
-      - test-python
-    # - deploy:
-    #     requires:
-    #       - test-python
+      - install_dependencies
+      - lint:
+          requires:
+            - install_dependencies
+      - run_tests:
+          requires:
+            - install_dependencies
+      - build:
+          requires:
+            - run_tests
+      - docker_build:
+          requires:
+            - build
+      - notify_github_success:
+          requires:
+            - docker_build
+      - notify_github_failure:
+          requires:
+            - install_dependencies
+          filters:
+            branches:
+              only:
+                - main
