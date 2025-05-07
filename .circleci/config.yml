@@ -14,40 +14,62 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Crear virtualenv
+          name: Crear virtualenv e instalar dependencias
           command: |
             python -m venv $VENV
             . $VENV/bin/activate
             pip install -r requirements.txt
+
   run_tests:
     parallelism: 2
     executor: python-executor
     steps:
       - checkout
       - run:
+          name: Crear virtualenv e instalar dependencias
+          command: |
+            python -m venv $VENV
+            . $VENV/bin/activate
+            pip install -r requirements.txt
+      - run:
           name: Ejecutar pruebas en paralelo
           command: |
             . $VENV/bin/activate
             TEST_FILES=$(circleci tests split --split-by=timings "test/*.py")
             echo "$TEST_FILES" | xargs -n 1 pytest --junitxml=report.xml
+
   lint:
     executor: python-executor
     steps:
       - checkout
       - run:
+          name: Crear virtualenv e instalar dependencias
+          command: |
+            python -m venv $VENV
+            . $VENV/bin/activate
+            pip install -r requirements.txt
+      - run:
           name: Análisis de estilo con flake8
           command: |
             . $VENV/bin/activate
             flake8 src/
+
   build:
     executor: python-executor
     steps:
       - checkout
       - run:
+          name: Crear virtualenv e instalar dependencias
+          command: |
+            python -m venv $VENV
+            . $VENV/bin/activate
+            pip install -r requirements.txt
+      - run:
           name: Build del paquete
           command: |
             . $VENV/bin/activate
             python -m build
+
   docker_build:
     docker:
       - image: cimg/base:stable
@@ -59,6 +81,7 @@ jobs:
           command: |
             docker build -t kms_service:latest .
             docker run -d -p 8000:8000 --name kms_container kms_service:latest
+
   notify_github_success:
     docker:
       - image: cimg/base:stable
@@ -71,6 +94,7 @@ jobs:
                  -X POST \
                  -d '{"body": "✅ ¡Build exitoso en CircleCI! Revisa los detalles en el panel de CircleCI."}' \
                  https://api.github.com/repos/Ariel454/python_kms/issues/1/comments
+
   notify_github_failure:
     docker:
       - image: cimg/base:stable
@@ -83,20 +107,21 @@ jobs:
                  -X POST \
                  -d '{"body": "❌ El pipeline falló en CircleCI. Revisa los detalles en el panel de CircleCI."}' \
                  https://api.github.com/repos/Ariel454/python_kms/issues/1/comments
+
 workflows:
   version: 2
-  main_workflow:
+
+  test_pipeline:
+    jobs:
+      - run_tests
+      - lint
+
+  build_pipeline:
     jobs:
       - install_dependencies
-      - lint:
-          requires:
-            - install_dependencies
-      - run_tests:
-          requires:
-            - install_dependencies
       - build:
           requires:
-            - run_tests
+            - install_dependencies
       - docker_build:
           requires:
             - build
